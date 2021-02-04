@@ -8,7 +8,7 @@ import java.util.ResourceBundle;
 
 import application.Main;
 import db.DbIntegrityException;
-import gui.Listenes.DataChangerListeners;
+import gui.Listenes.DataChangeListeners;
 import gui.util.Alerts;
 import gui.util.Utils;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -32,7 +32,7 @@ import javafx.stage.Stage;
 import model.entities.Department;
 import model.service.DepartmentService;
 
-public class DepartmentListController implements Initializable, DataChangerListeners {
+public class DepartmentListController implements Initializable, DataChangeListeners {
 
 	private DepartmentService service;
 
@@ -40,21 +40,21 @@ public class DepartmentListController implements Initializable, DataChangerListe
 	private TableView<Department> tableViewDepartment;
 
 	@FXML
-	private TableColumn<Department, Department> tableColumnREMOVE;
-
-	@FXML
-	private Button btnew;
-
-	private ObservableList<Department> obsList;
-
-	@FXML
-	private TableColumn<Department, Integer> tableColumnID;
+	private TableColumn<Department, Integer> tableColumnId;
 
 	@FXML
 	private TableColumn<Department, String> tableColumnName;
 
 	@FXML
 	private TableColumn<Department, Department> tableColumnEDIT;
+
+	@FXML
+	private TableColumn<Department, Department> tableColumnREMOVE;
+
+	@FXML
+	private Button btNew;
+
+	private ObservableList<Department> obsList;
 
 	@FXML
 	public void onBtNewAction(ActionEvent event) {
@@ -69,11 +69,11 @@ public class DepartmentListController implements Initializable, DataChangerListe
 
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
-		inicializeNodes();
+		initializeNodes();
 	}
 
-	private void inicializeNodes() {
-		tableColumnID.setCellValueFactory(new PropertyValueFactory<>("id"));
+	private void initializeNodes() {
+		tableColumnId.setCellValueFactory(new PropertyValueFactory<>("id"));
 		tableColumnName.setCellValueFactory(new PropertyValueFactory<>("name"));
 
 		Stage stage = (Stage) Main.getMainScene().getWindow();
@@ -99,7 +99,7 @@ public class DepartmentListController implements Initializable, DataChangerListe
 			DepartmentFormController controller = loader.getController();
 			controller.setDepartment(obj);
 			controller.setDepartmentService(new DepartmentService());
-			controller.subcribleDataChangerListener(this);
+			controller.subscribeDataChangeListener(this);
 			controller.updateFormData();
 
 			Stage dialogStage = new Stage();
@@ -110,7 +110,8 @@ public class DepartmentListController implements Initializable, DataChangerListe
 			dialogStage.initModality(Modality.WINDOW_MODAL);
 			dialogStage.showAndWait();
 		} catch (IOException e) {
-			Alerts.showAlert("IOExption", "Error loading view", e.getMessage(), AlertType.ERROR);
+			e.printStackTrace();
+			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
 		}
 	}
 
@@ -157,21 +158,18 @@ public class DepartmentListController implements Initializable, DataChangerListe
 	}
 
 	private void removeEntity(Department obj) {
-		
 		Optional<ButtonType> result = Alerts.showConfirmation("Confirmation", "Are you sure to delete?");
-		if(result.get() == ButtonType.OK) {
-			if(service == null) {
+
+		if (result.get() == ButtonType.OK) {
+			if (service == null) {
 				throw new IllegalStateException("Service was null");
 			}
 			try {
 				service.remove(obj);
 				updateTableView();
-			}catch(DbIntegrityException e) {
-				Alerts.showAlert("Error remove object", null, e.getMessage(), AlertType.ERROR);
+			} catch (DbIntegrityException e) {
+				Alerts.showAlert("Error removing object", null, e.getMessage(), AlertType.ERROR);
 			}
 		}
-
-		
 	}
-
 }

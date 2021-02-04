@@ -1,6 +1,6 @@
 package gui.Listenes;
 
-public interface DataChangerListeners {
+public interface DataChangeListeners {
 	
 	void onDataChanger();
 

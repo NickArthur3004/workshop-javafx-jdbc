@@ -1,3 +1,4 @@
+
 package gui;
 
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.util.ResourceBundle;
 
 import application.Main;
 import db.DbIntegrityException;
-import gui.Listenes.DataChangerListeners;
+import gui.Listenes.DataChangeListeners;
 import gui.util.Alerts;
 import gui.util.Utils;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -31,9 +32,10 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.entities.Seller;
+import model.service.DepartmentService;
 import model.service.SellerService;
 
-public class SellerListController implements Initializable, DataChangerListeners {
+public class SellerListController implements Initializable, DataChangeListeners {
 
 	private SellerService service;
 
@@ -41,31 +43,30 @@ public class SellerListController implements Initializable, DataChangerListeners
 	private TableView<Seller> tableViewSeller;
 
 	@FXML
-	private TableColumn<Seller, Seller> tableColumnREMOVE;
-
-	@FXML
-	private Button btnew;
-
-	private ObservableList<Seller> obsList;
-
-	@FXML
-	private TableColumn<Seller, Integer> tableColumnID;
+	private TableColumn<Seller, Integer> tableColumnId;
 
 	@FXML
 	private TableColumn<Seller, String> tableColumnName;
-	
+
 	@FXML
 	private TableColumn<Seller, String> tableColumnEmail;
-	
+
 	@FXML
 	private TableColumn<Seller, Date> tableColumnBirthDate;
-	
+
 	@FXML
 	private TableColumn<Seller, Double> tableColumnBaseSalary;
-	
 
 	@FXML
 	private TableColumn<Seller, Seller> tableColumnEDIT;
+
+	@FXML
+	private TableColumn<Seller, Seller> tableColumnREMOVE;
+
+	@FXML
+	private Button btNew;
+
+	private ObservableList<Seller> obsList;
 
 	@FXML
 	public void onBtNewAction(ActionEvent event) {
@@ -80,15 +81,15 @@ public class SellerListController implements Initializable, DataChangerListeners
 
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
-		inicializeNodes();
+		initializeNodes();
 	}
 
-	private void inicializeNodes() {
-		tableColumnID.setCellValueFactory(new PropertyValueFactory<>("id"));
+	private void initializeNodes() {
+		tableColumnId.setCellValueFactory(new PropertyValueFactory<>("id"));
 		tableColumnName.setCellValueFactory(new PropertyValueFactory<>("name"));
 		tableColumnEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
 		tableColumnBirthDate.setCellValueFactory(new PropertyValueFactory<>("birthDate"));
-		Utils.formatTableColumnDate(tableColumnBirthDate, "dd/MM/yyyy");;
+		Utils.formatTableColumnDate(tableColumnBirthDate, "dd/MM/yyyy");
 		tableColumnBaseSalary.setCellValueFactory(new PropertyValueFactory<>("baseSalary"));
 		Utils.formatTableColumnDouble(tableColumnBaseSalary, 2);
 
@@ -107,15 +108,16 @@ public class SellerListController implements Initializable, DataChangerListeners
 		initRemoveButtons();
 	}
 
-private void createDialogForm(Seller obj, String absoluteName, Stage parentStage) {
+	private void createDialogForm(Seller obj, String absoluteName, Stage parentStage) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			Pane pane = loader.load();
 
 			SellerFormController controller = loader.getController();
 			controller.setSeller(obj);
-			controller.setSellerService(new SellerService());
-			controller.subcribleDataChangerListener(this);
+			controller.setServices(new SellerService(), new DepartmentService());
+			controller.loadAssociatedObjects();
+			controller.subscribeDataChangeListener(this);
 			controller.updateFormData();
 
 			Stage dialogStage = new Stage();
@@ -126,7 +128,8 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 			dialogStage.initModality(Modality.WINDOW_MODAL);
 			dialogStage.showAndWait();
 		} catch (IOException e) {
-			Alerts.showAlert("IOExption", "Error loading view", e.getMessage(), AlertType.ERROR);
+			e.printStackTrace();
+			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
 		}
 	}
 
@@ -148,8 +151,7 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 					return;
 				}
 				setGraphic(button);
-				button.setOnAction(
-						event -> createDialogForm(obj, "/gui/SellerForm.fxml", Utils.currentStage(event)));
+				button.setOnAction(event -> createDialogForm(obj, "/gui/SellerForm.fxml", Utils.currentStage(event)));
 			}
 		});
 	}
@@ -173,21 +175,18 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 	}
 
 	private void removeEntity(Seller obj) {
-		
 		Optional<ButtonType> result = Alerts.showConfirmation("Confirmation", "Are you sure to delete?");
-		if(result.get() == ButtonType.OK) {
-			if(service == null) {
+
+		if (result.get() == ButtonType.OK) {
+			if (service == null) {
 				throw new IllegalStateException("Service was null");
 			}
 			try {
 				service.remove(obj);
 				updateTableView();
-			}catch(DbIntegrityException e) {
-				Alerts.showAlert("Error remove object", null, e.getMessage(), AlertType.ERROR);
+			} catch (DbIntegrityException e) {
+				Alerts.showAlert("Error removing object", null, e.getMessage(), AlertType.ERROR);
 			}
 		}
-
-		
 	}
-
 }
