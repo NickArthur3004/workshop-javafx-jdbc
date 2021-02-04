@@ -2,7 +2,6 @@ package gui;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.channels.IllegalSelectorException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -89,6 +88,7 @@ public class DepartmentListController implements Initializable, DataChangerListe
 		obsList = FXCollections.observableArrayList(list);
 		tableViewDepartment.setItems(obsList);
 		initEditButtons();
+		initRemoveButtons();
 	}
 
 	private void createDialogForm(Department obj, String absoluteName, Stage parentStage) {
@@ -155,19 +155,23 @@ public class DepartmentListController implements Initializable, DataChangerListe
 			}
 		});
 	}
+
 	private void removeEntity(Department obj) {
-		 Optional<ButtonType> result = Alerts.showConfirmation("Confirmation", "Are you sure to delete?");
-			if(result.get() == ButtonType.OK) {
-				if(service == null) {
-					throw new IllegalStateException("Service was null");
-				}
-				try {
+		
+		Optional<ButtonType> result = Alerts.showConfirmation("Confirmation", "Are you sure to delete?");
+		if(result.get() == ButtonType.OK) {
+			if(service == null) {
+				throw new IllegalStateException("Service was null");
+			}
+			try {
 				service.remove(obj);
 				updateTableView();
-				}catch(DbIntegrityException e) {
-					Alerts.showAlert("Error removing object", null, e.getMessage(), AlertType.ERROR);
-				}
+			}catch(DbIntegrityException e) {
+				Alerts.showAlert("Error remove object", null, e.getMessage(), AlertType.ERROR);
 			}
 		}
+
+		
+	}
 
 }
